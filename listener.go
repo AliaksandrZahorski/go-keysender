@@ -6,6 +6,17 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
+)
+
+var (
+	mod = windows.NewLazyDLL("user32.dll")
+)
+
+type (
+	HANDLE uintptr
+	HWND   HANDLE
 )
 
 const (
@@ -66,20 +77,33 @@ func main() {
 
 	peekmsg := user32.MustFindProc("PeekMessageW")
 
-	for {
+	out := false
+	for out == false {
 		var msg = &MSG{}
 		peekmsg.Call(uintptr(unsafe.Pointer(msg)), 0, 0, 0, 1)
 
 		// Registered id is in the WPARAM field:
 		if id := msg.WPARAM; id != 0 {
 			fmt.Println("Hotkey pressed:", keys[id])
+
+			// hwnd of current window
+			if hwnd := getWindow("GetForegroundWindow"); hwnd != 0 {
+				fmt.Println("# hwnd:", hwnd)
+			}
+
 			if id == 3 { // CTRL+ALT+X = Exit
 				fmt.Println("CTRL+ALT+X pressed, goodbye...")
-				return
+				out = true
+				// return
 			}
 		}
 
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 50)
+	}
+
+	for i := 0; i < 3; i++ {
+		fmt.Println("cycle")
+		time.Sleep(time.Millisecond * 1000)
 	}
 }
 
@@ -90,4 +114,10 @@ type MSG struct {
 	LPARAM int64
 	DWORD  int32
 	POINT  struct{ X, Y int64 }
+}
+
+func getWindow(funcName string) uintptr {
+	proc := mod.NewProc(funcName)
+	hwnd, _, _ := proc.Call()
+	return hwnd
 }
