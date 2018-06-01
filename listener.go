@@ -92,11 +92,11 @@ func main() {
 			if hwnd != 0 {
 				fmt.Println("# hwnd:", hwnd)
 				time.Sleep(time.Millisecond * 1000)
-				key.PressKey(hwnd, consts.VK_F1)
+				// key.PressKey(hwnd, consts.VK_F1)
 			}
 
 			if id == 3 { // CTRL+ALT+X = Exit
-				fmt.Println("CTRL+ALT+X pressed, goodbye...")
+				fmt.Println("CTRL+ALT+X pressed, going to cycle...")
 				out = true
 			}
 		}
@@ -104,9 +104,16 @@ func main() {
 		time.Sleep(time.Millisecond * 50)
 	}
 
-	for i := 0; i < 3; i++ {
-		fmt.Println("cycle")
-		time.Sleep(time.Millisecond * 1000)
+	uptimeTicker := time.NewTicker(3 * time.Second)
+	// dateTicker := time.NewTicker(3 * time.Second)
+
+	for {
+		select {
+			case <-uptimeTicker.C:
+				key.PressKey(hwnd, consts.VK_F1)
+			// case <-dateTicker.C:
+			// 		periodic2()
+		}
 	}
 }
 
