@@ -25,15 +25,18 @@ const (
 var (
 	mod = windows.NewLazyDLL("user32.dll")
 	procSendMessage = mod.NewProc("SendMessageW")
+	procPostMessage = mod.NewProc("PostMessageW")
 )
 
 
 func PressKey(hwnd uintptr, key uintptr) uintptr {
-	SendMessage(hwnd, consts.WM_KEYDOWN, key, lParamDown(key))
+	PostMessage(hwnd, consts.WM_KEYDOWN, key, lParamDown(key))
 	time.Sleep(time.Millisecond * 100)
-	ret := SendMessage(hwnd, consts.WM_KEYUP, key, lParamUp(key))
-	return ret
+	PostMessage(hwnd, consts.WM_KEYUP, key, lParamUp(key))
+	return uintptr(0)
 }
+
+
 
 func SendMessage(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	ret, _, _ := procSendMessage.Call(
@@ -43,6 +46,16 @@ func SendMessage(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		lParam)
 
 	return ret
+}
+
+func PostMessage(hwnd uintptr, msg uint32, wParam, lParam uintptr) bool {
+	ret, _, _ := procPostMessage.Call(
+		uintptr(hwnd),
+		uintptr(msg),
+		wParam,
+		lParam)
+
+	return ret != 0
 }
 
 func lParamDown(key uintptr) uintptr {
